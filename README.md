@@ -14,14 +14,14 @@ To create this networking environment in your Azure subscription, please follow 
 2. Create two resource groups to represent two environments. Suffix each resource group name with either a -dev or -prod. An example could be networking-dev and networking-prod.
 3. Next, you must create a service principal with Contributor roles assigned to the two resource groups.
 4. In your github organization for your project, create two environments, and named them dev and prod respectively.
-5. Create the following secrets in your github per environment. Be sure to populate with your desired values.
+5. Create the following secrets in your github per environment. Be sure to populate with your desired values. The values below are all suggestions.
 6. Note that the environment suffix of dev or prod will be appened to your resource group but you will have the option to define your own resource prefix.
 
 ## Secrets
 | Name | Value |
 | --- | --- |
 | AZURE_CREDENTIALS | <pre>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;"clientId": "",<br/>&nbsp;&nbsp;&nbsp;&nbsp;"clientSecret": "", <br/>&nbsp;&nbsp;&nbsp;&nbsp;"subscriptionId": ""<br/>&nbsp;&nbsp;&nbsp;&nbsp;"tenantId": "" <br/>}</pre> |
-| RESOURCE_PREFIX | plat |
+| RESOURCE_PREFIX | platform |
 | PRIMARY_LOCATION | southcentralus |
 | DR_LOCATION | northcentralus |
 | RESOURCE_GROUP | networking |

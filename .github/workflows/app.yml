@@ -1,0 +1,57 @@
+on: 
+  push:
+  workflow_dispatch:
+    inputs:
+      environmentselector:
+        description: 'Environment selector'     
+        required: false
+        default: 'default'
+
+jobs:
+  setup:
+    name: Choose Secrets Environment Job
+    runs-on: windows-latest
+    steps:
+      - id: setup
+        name: Setup Environment Setp
+        run: |
+          $envSelector = "${{ github.event.inputs.environmentselector }}"
+          Write-Host "Environment Selector: $envSelector Branch ${{ github.ref }}"
+          if ($envSelector -eq '' -or $envSelector -eq 'default') {            
+            if ('${{ github.ref }}' -eq 'refs/heads/main') { 
+              echo "::set-output name=build_env::prod"
+              echo "::set-output name=skip_functional_test::true" 
+            } else {
+              echo "::set-output name=build_env::dev"
+              echo "::set-output name=skip_functional_test::false" 
+            }
+          } else {
+            echo "::set-output name=build_env::$envSelector"
+            echo "::set-output name=skip_functional_test::true" 
+          }
+    outputs:
+      build_env: ${{ steps.setup.outputs.build_env }}
+      skip_functional_test: ${{ steps.setup.outputs.skip_functional_test }}
+
+  build_deploy:
+    name: Build, Deploy VNet Job
+    needs: setup
+    environment: ${{ needs.setup.outputs.build_env }}
+    runs-on: windows-latest
+    steps:
+      - name: Azure CLI Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+
+      - id: buid-and-deploy
+        name: Build Azure environment
+        run: |
+          $deploymentName = "networkdeploy" + (Get-Date).ToString("yyyyMMddHHmmss")
+          $deployOutputText = (az deployment group create --name $deploymentName --resource-group ${{ secrets.RESOURCE_GROUP }}-${{ needs.setup.outputs.build_env }} --template-file Deployment/deploy.bicep --parameters `
+            primary_location=${{ secrets.prefix=${{ secrets.PRIMARY_LOCATION }} ` }} `
+            dr_location=${{ secrets.DR_LOCATION }} `
+            branch=${{ github.ref }} `
+            environment=${{ needs.setup.outputs.build_env }} `
+            prefix=${{ secrets.RESOURCE_PREFIX }})
