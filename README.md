@@ -18,13 +18,13 @@ To create this networking environment in your Azure subscription, please follow 
 6. Note that the environment suffix of dev or prod will be appened to your resource group but you will have the option to define your own resource prefix.
 
 ## Picking Regions
-Be careful when considering which is your primary and DR region. Any primary region should be paired with a DR region that is documented as a paired region: https://docs.microsoft.com/en-us/azure/best-practices-availability-paired-regions. Also, in some cases, newer Azure services are not yet in a region where you are located. For example, as of this writing, App Service Environment v3 is not yet in South Central US and it would not work if you want to create ASEv3.
+Be careful when considering which is your primary and DR region. Any primary region should be paired with a DR region that is documented as a paired region: https://docs.microsoft.com/en-us/azure/best-practices-availability-paired-regions. In our example, south central us is paired with north central us where it is a DR location.
 
 ## Secrets
 | Name | Value |
 | --- | --- |
 | AZURE_CREDENTIALS | <pre>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;"clientId": "",<br/>&nbsp;&nbsp;&nbsp;&nbsp;"clientSecret": "", <br/>&nbsp;&nbsp;&nbsp;&nbsp;"subscriptionId": "",<br/>&nbsp;&nbsp;&nbsp;&nbsp;"tenantId": "" <br/>}</pre> |
 | RESOURCE_PREFIX | platform |
-| PRIMARY_LOCATION | centralus |
-| DR_LOCATION | eastus2 |
+| PRIMARY_LOCATION | southcentralus |
+| DR_LOCATION | northcentralus |
 | RESOURCE_GROUP | networking |
