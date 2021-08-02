@@ -27,6 +27,12 @@ resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
           addressPrefix: '10.0.0.0/24'
         }
       }
+      {
+        name: 'ase'
+        properties: {
+          addressPrefix: '10.0.1.0/24'
+        }
+      }
     ]
   }
 }
@@ -46,6 +52,12 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         name: 'default'
         properties: {
           addressPrefix: '172.16.0.0/24'
+        }
+      }
+      {
+        name: 'ase'
+        properties: {
+          addressPrefix: '172.16.1.0/24'
         }
       }
     ]
