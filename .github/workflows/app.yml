@@ -49,7 +49,7 @@ jobs:
         name: Build Azure environment
         run: |
           $deploymentName = "networkdeploy" + (Get-Date).ToString("yyyyMMddHHmmss")
-          $deployOutputText = (az deployment group create --name $deploymentName --resource-group "${{ secrets.RESOURCE_GROUP }}-${{ needs.setup.outputs.build_env }}" --template-file ./Deployment/deploy.bicep --parameters `
+          $deployOutputText = (az deployment group create --name $deploymentName --resource-group "${{ secrets.RESOURCE_GROUP }}-${{ needs.setup.outputs.build_env }}" --template-file ../Deployment/deploy.bicep --parameters `
             primary_location=${{ secrets.PRIMARY_LOCATION }} `
             dr_location=${{ secrets.DR_LOCATION }} `
             branch=${{ github.ref }} `
