@@ -10,6 +10,12 @@ var tags = {
   'branch': branch
 }
 
+var subnets = [
+  'default'
+  'ase'
+  'aks'
+]
+
 resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   name: '${prefix}-pri-vnet'
   tags: tags
@@ -20,20 +26,12 @@ resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         '10.0.0.0/16'
       ]
     }
-    subnets: [
-      {
-        name: 'default'
-        properties: {
-          addressPrefix: '10.0.0.0/24'
-        }
+    subnets: [for (subnetName, i) in subnets: {
+      name: subnetName
+      properties: {
+        addressPrefix: '10.0.${i}.0/24'
       }
-      {
-        name: 'ase'
-        properties: {
-          addressPrefix: '10.0.1.0/24'
-        }
-      }
-    ]
+    }]
   }
 }
 
@@ -47,20 +45,12 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         '172.16.0.0/16'
       ]
     }
-    subnets: [
-      {
-        name: 'default'
-        properties: {
-          addressPrefix: '172.16.0.0/24'
-        }
+    subnets: [for (subnetName, i) in subnets: {
+      name: subnetName
+      properties: {
+        addressPrefix: '172.16.${i}.0/24'
       }
-      {
-        name: 'ase'
-        properties: {
-          addressPrefix: '172.16.1.0/24'
-        }
-      }
-    ]
+    }]
   }
 }
 
