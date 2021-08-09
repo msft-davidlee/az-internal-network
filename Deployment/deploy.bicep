@@ -14,6 +14,7 @@ var subnets = [
   'default'
   'ase'
   'aks'
+  'aci'
 ]
 
 resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
