@@ -108,6 +108,7 @@ resource defaultnsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
           sourceAddressPrefix: '*'
           sourcePortRange: '22'
           destinationAddressPrefix: '*'
+          destinationPortRange: '*'
         }
       }
     ]
