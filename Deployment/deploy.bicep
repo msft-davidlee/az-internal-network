@@ -106,7 +106,7 @@ resource defaultnsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
           direction: 'Inbound'
           access: 'Allow'
           sourceAddressPrefix: '*'
-          sourcePortRange: '22'
+          sourcePortRange: '*'
           destinationPortRange: '22'
           destinationApplicationSecurityGroups: [
             {
