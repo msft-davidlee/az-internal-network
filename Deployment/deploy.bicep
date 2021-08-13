@@ -106,9 +106,12 @@ resource defaultnsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
           direction: 'Inbound'
           access: 'Allow'
           sourceAddressPrefix: '*'
-          sourcePortRange: '22'
-          destinationAddressPrefix: '*'
-          destinationPortRange: '*'
+          sourcePortRange: '22'          
+          destinationApplicationSecurityGroups: [
+            {
+              id: vmasg.id
+            }
+          ]
         }
       }
     ]
@@ -123,4 +126,10 @@ resource associatedefaultnsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-
       id: defaultnsg.id
     }
   }
+}
+
+resource vmasg 'Microsoft.Network/applicationSecurityGroups@2021-02-01' = {
+  name: 'ssh-asg'
+  location: primary_location
+  tags: tags
 }
