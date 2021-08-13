@@ -107,7 +107,7 @@ resource defaultnsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
           access: 'Allow'
           sourceAddressPrefix: '*'
           sourcePortRange: '22'
-          destinationPortRange: '*'
+          destinationPortRange: '22'
           destinationApplicationSecurityGroups: [
             {
               id: vmasg.id
