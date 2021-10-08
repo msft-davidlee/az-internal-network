@@ -19,6 +19,7 @@ var subnets = [
   'appsvcaltid'
   'appsvcpartapi'
   'appsvcbackend'
+  'appsvcsql'
 ]
 
 resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
