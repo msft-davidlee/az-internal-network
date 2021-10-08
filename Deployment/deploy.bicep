@@ -15,6 +15,10 @@ var subnets = [
   'ase'
   'aks'
   'aci'
+  'appsvccs'
+  'appsvcaltid'
+  'appsvcpartapi'
+  'appsvcbackend'
 ]
 
 resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
