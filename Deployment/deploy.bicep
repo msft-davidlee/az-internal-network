@@ -19,7 +19,7 @@ var subnets = [
   'appsvcaltid'
   'appsvcpartapi'
   'appsvcbackend'
-  'appsvcsql'
+  'appsvcendpoints'
 ]
 
 resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
@@ -36,9 +36,27 @@ resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       name: subnetName
       properties: {
         addressPrefix: '10.0.${i}.0/24'
-        serviceEndpoints: (subnetName == 'appsvcsql') ? [
+        serviceEndpoints: (subnetName == 'appsvcendpoints') ? [
           {
             service: 'Microsoft.Sql'
+            locations: [
+              primary_location
+            ]
+          }
+          {
+            service: 'Microsoft.Storage'
+            locations: [
+              primary_location
+            ]
+          }
+          {
+            service: 'Microsoft.ServiceBus'
+            locations: [
+              primary_location
+            ]
+          }
+          {
+            service: 'Microsoft.KeyVault'
             locations: [
               primary_location
             ]
@@ -66,6 +84,24 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         serviceEndpoints: (subnetName == 'appsvcsql') ? [
           {
             service: 'Microsoft.Sql'
+            locations: [
+              dr_location
+            ]
+          }
+          {
+            service: 'Microsoft.Storage'
+            locations: [
+              dr_location
+            ]
+          }
+          {
+            service: 'Microsoft.ServiceBus'
+            locations: [
+              dr_location
+            ]
+          }
+          {
+            service: 'Microsoft.KeyVault'
             locations: [
               dr_location
             ]
