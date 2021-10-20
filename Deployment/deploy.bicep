@@ -36,6 +36,14 @@ resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       name: subnetName
       properties: {
         addressPrefix: '10.0.${i}.0/24'
+        serviceEndpoints: (subnetName == 'appsvcsql') ? [
+          {
+            service: 'Microsoft.Sql'
+            locations: [
+              primary_location
+            ]
+          }
+        ] : []
       }
     }]
   }
@@ -55,6 +63,14 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       name: subnetName
       properties: {
         addressPrefix: '172.16.${i}.0/24'
+        serviceEndpoints: (subnetName == 'appsvcsql') ? [
+          {
+            service: 'Microsoft.Sql'
+            locations: [
+              dr_location
+            ]
+          }
+        ] : []
       }
     }]
   }
