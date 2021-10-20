@@ -81,7 +81,7 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       name: subnetName
       properties: {
         addressPrefix: '172.16.${i}.0/24'
-        serviceEndpoints: (subnetName == 'appsvcsql') ? [
+        serviceEndpoints: (subnetName == 'appsvcendpoints') ? [
           {
             service: 'Microsoft.Sql'
             locations: [
