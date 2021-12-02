@@ -3,6 +3,7 @@ param dr_location string
 param environment string
 param prefix string
 param branch string
+param sourceIp string
 
 var tags = {
   'stack-name': prefix
@@ -161,7 +162,7 @@ resource defaultnsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
           protocol: 'Tcp'
           direction: 'Inbound'
           access: 'Allow'
-          sourceAddressPrefix: '*'
+          sourceAddressPrefix: sourceIp
           sourcePortRange: '*'
           destinationPortRange: '22'
           destinationApplicationSecurityGroups: [

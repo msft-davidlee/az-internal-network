@@ -56,4 +56,5 @@ jobs:
             dr_location=${{ secrets.DR_LOCATION }} `
             branch=${{ github.ref }} `
             environment=${{ needs.setup.outputs.build_env }} `
+            sourceIp=${{ secrets.SOURCE_IP }} `
             prefix=${{ secrets.RESOURCE_PREFIX }})
