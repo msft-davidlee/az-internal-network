@@ -191,3 +191,19 @@ resource vmasg 'Microsoft.Network/applicationSecurityGroups@2021-02-01' = {
   location: primary_location
   tags: tags
 }
+
+resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for (subnetName, i) in subnets: if (i > 0) {
+  name: '${prefix}-pri-${subnetName}-subnet'
+  location: primary_location
+  tags: tags
+}]
+
+resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = [for (subnetName, i) in subnets: if (i > 0) {
+  name: '${primary_vnet.name}/${subnetName}'
+  properties: {
+    addressPrefix: primary_vnet.properties.subnets[i].properties.addressPrefix
+    networkSecurityGroup: {
+      id: prinsgs[i - 1].id
+    }
+  }
+}]
