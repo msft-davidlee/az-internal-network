@@ -198,12 +198,12 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for (su
   tags: tags
 }]
 
-resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = [for (subnetName, i) in subnets: if (i > 0) {
-  name: '${primary_vnet.name}/${subnetName}'
-  properties: {
-    addressPrefix: primary_vnet.properties.subnets[i].properties.addressPrefix
-    networkSecurityGroup: {
-      id: prinsgs[i].id
-    }
-  }
-}]
+// resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = [for (subnetName, i) in subnets: if (i > 0) {
+//   name: '${primary_vnet.name}/${subnetName}'
+//   properties: {
+//     addressPrefix: primary_vnet.properties.subnets[i].properties.addressPrefix
+//     networkSecurityGroup: {
+//       id: prinsgs[i].id
+//     }
+//   }
+// }]
