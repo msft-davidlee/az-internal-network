@@ -222,6 +222,7 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for sub
   }
 }]
 
+@batchSize(1)
 resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = [for (subnetName, i) in subnets: {
   name: '${primary_vnet.name}/${subnetName}'
   properties: {
