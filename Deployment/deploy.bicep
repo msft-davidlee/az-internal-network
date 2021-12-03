@@ -148,44 +148,6 @@ resource dr_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@20
   }
 }
 
-// resource defaultnsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
-//   name: '${prefix}-pri-default-subnet'
-//   location: primary_location
-//   tags: tags
-//   properties: {
-//     securityRules: [
-//       {
-//         name: 'AllowSSH'
-//         properties: {
-//           description: 'Allow SSH'
-//           priority: 100
-//           protocol: 'Tcp'
-//           direction: 'Inbound'
-//           access: 'Allow'
-//           sourceAddressPrefix: sourceIp
-//           sourcePortRange: '*'
-//           destinationPortRange: '22'
-//           destinationApplicationSecurityGroups: [
-//             {
-//               id: vmasg.id
-//             }
-//           ]
-//         }
-//       }
-//     ]
-//   }
-// }
-
-// resource associatedefaultnsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = {
-//   name: '${primary_vnet.name}/default'
-//   properties: {
-//     addressPrefix: primary_vnet.properties.subnets[0].properties.addressPrefix
-//     networkSecurityGroup: {
-//       id: defaultnsg.id
-//     }
-//   }
-// }
-
 resource vmasg 'Microsoft.Network/applicationSecurityGroups@2021-02-01' = {
   name: 'ssh-asg'
   location: primary_location
@@ -229,6 +191,28 @@ resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' 
     addressPrefix: primary_vnet.properties.subnets[i].properties.addressPrefix
     networkSecurityGroup: {
       id: prinsgs[i].id
+    }
+  }
+}]
+
+resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subnetName in subnets: {
+  name: '${prefix}-dr-${subnetName}-subnet-nsg'
+  location: dr_location
+  tags: tags
+  properties: {
+    securityRules: (subnetName == 'default') ? [
+      allowSSHRule
+    ] : []
+  }
+}]
+
+@batchSize(1)
+resource associatedrnsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = [for (subnetName, i) in subnets: {
+  name: '${dr_vnet.name}/${subnetName}'
+  properties: {
+    addressPrefix: dr_vnet.properties.subnets[i].properties.addressPrefix
+    networkSecurityGroup: {
+      id: drnsgs[i].id
     }
   }
 }]
