@@ -203,7 +203,7 @@ resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' 
   properties: {
     addressPrefix: primary_vnet.properties.subnets[i].properties.addressPrefix
     networkSecurityGroup: {
-      id: prinsgs[i - 1].id
+      id: prinsgs[i].id
     }
   }
 }]
