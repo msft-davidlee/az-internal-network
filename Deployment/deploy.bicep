@@ -199,11 +199,6 @@ resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subn
   name: '${prefix}-dr-${subnetName}-subnet-nsg'
   location: dr_location
   tags: tags
-  properties: {
-    securityRules: (subnetName == 'default') ? [
-      allowSSHRule
-    ] : []
-  }
 }]
 
 @batchSize(1)
