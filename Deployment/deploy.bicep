@@ -192,12 +192,29 @@ resource vmasg 'Microsoft.Network/applicationSecurityGroups@2021-02-01' = {
   tags: tags
 }
 
-resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subnetName in subnets: if (subnetName != 'default') {
+resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subnetName in subnets: {
   name: '${prefix}-pri-${subnetName}-subnet'
   location: primary_location
   tags: tags
   properties: {
-    securityRules: []
+    securityRules:  (subnetName == 'default')?[      {
+      name: 'AllowSSH'
+      properties: {
+        description: 'Allow SSH'
+        priority: 100
+        protocol: 'Tcp'
+        direction: 'Inbound'
+        access: 'Allow'
+        sourceAddressPrefix: sourceIp
+        sourcePortRange: '*'
+        destinationPortRange: '22'
+        destinationApplicationSecurityGroups: [
+          {
+            id: vmasg.id
+          }
+        ]
+      }
+    }]:[]
   }
 }]
 
