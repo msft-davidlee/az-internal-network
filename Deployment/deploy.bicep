@@ -192,7 +192,7 @@ resource vmasg 'Microsoft.Network/applicationSecurityGroups@2021-02-01' = {
   tags: tags
 }
 
-resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for (subnetName, i) in subnets: if (i > 0) {
+resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for (subnetName, i) in subnets: {
   name: '${prefix}-pri-${subnetName}-subnet'
   location: primary_location
   tags: tags
