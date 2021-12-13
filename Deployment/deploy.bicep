@@ -1,12 +1,14 @@
-param primary_location string
-param dr_location string
+param primary_location string = 'centralus'
+param dr_location string = 'eastus2'
 param environment string
 param prefix string
 param branch string
 param sourceIp string
 
+var networkPrefix = toLower('${prefix}-${primary_location}')
+
 var tags = {
-  'stack-name': prefix
+  'stack-name': networkPrefix
   'environment': toLower(replace(environment, '_', ''))
   'branch': branch
 }
@@ -23,7 +25,7 @@ var subnets = [
 ]
 
 resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
-  name: '${prefix}-pri-vnet'
+  name: '${networkPrefix}-pri-vnet'
   tags: tags
   location: primary_location
   properties: {
@@ -68,7 +70,7 @@ resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
 }
 
 resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
-  name: '${prefix}-dr-vnet'
+  name: '${networkPrefix}-dr-vnet'
   tags: tags
   location: dr_location
   properties: {
@@ -113,7 +115,7 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
 }
 
 resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
-  name: '${prefix}-primary-to-dr-peer'
+  name: '${networkPrefix}-pri-to-dr-peer'
   parent: primary_vnet
   dependsOn: [
     primary_vnet
@@ -131,7 +133,7 @@ resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerin
 }
 
 resource dr_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
-  name: '${prefix}-dr-primary-dr-peer'
+  name: '${networkPrefix}-dr-to-pri-peer'
   parent: dr_vnet
   dependsOn: [
     primary_vnet
@@ -174,7 +176,7 @@ var allowSSHRule = {
 }
 
 resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subnetName in subnets: {
-  name: '${prefix}-pri-${subnetName}-subnet-nsg'
+  name: '${networkPrefix}-pri-${subnetName}-subnet-nsg'
   location: primary_location
   tags: tags
   properties: {
@@ -196,7 +198,7 @@ resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' 
 }]
 
 resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subnetName in subnets: {
-  name: '${prefix}-dr-${subnetName}-subnet-nsg'
+  name: '${networkPrefix}-dr-${subnetName}-subnet-nsg'
   location: dr_location
   tags: tags
 }]
