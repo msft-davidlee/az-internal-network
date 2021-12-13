@@ -151,7 +151,7 @@ resource dr_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@20
 }
 
 resource vmasg 'Microsoft.Network/applicationSecurityGroups@2021-02-01' = {
-  name: 'ssh-asg'
+  name: '${networkPrefix}-ssh-asg'
   location: primary_location
   tags: tags
 }
