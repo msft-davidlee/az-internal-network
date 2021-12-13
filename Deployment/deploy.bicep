@@ -1,12 +1,15 @@
-param primary_location string
-param dr_location string
+param primary_location string = 'centralus'
+param dr_location string = 'eastus2'
 param environment string
 param prefix string
 param branch string
 param sourceIp string
 
+var priNetworkPrefix = toLower('${prefix}-${primary_location}')
+var drNetworkPrefix = toLower('${prefix}-${dr_location}')
+
 var tags = {
-  'stack-name': prefix
+  'stack-name': '${prefix}-v2'
   'environment': toLower(replace(environment, '_', ''))
   'branch': branch
 }
@@ -23,7 +26,7 @@ var subnets = [
 ]
 
 resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
-  name: '${prefix}-pri-vnet'
+  name: '${priNetworkPrefix}-pri-vnet'
   tags: tags
   location: primary_location
   properties: {
@@ -68,7 +71,7 @@ resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
 }
 
 resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
-  name: '${prefix}-dr-vnet'
+  name: '${drNetworkPrefix}-dr-vnet'
   tags: tags
   location: dr_location
   properties: {
@@ -113,7 +116,7 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
 }
 
 resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
-  name: '${prefix}-primary-to-dr-peer'
+  name: '${priNetworkPrefix}-pri-to-dr-peer'
   parent: primary_vnet
   dependsOn: [
     primary_vnet
@@ -131,7 +134,7 @@ resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerin
 }
 
 resource dr_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
-  name: '${prefix}-dr-primary-dr-peer'
+  name: '${drNetworkPrefix}-dr-to-pri-peer'
   parent: dr_vnet
   dependsOn: [
     primary_vnet
@@ -149,7 +152,7 @@ resource dr_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@20
 }
 
 resource vmasg 'Microsoft.Network/applicationSecurityGroups@2021-02-01' = {
-  name: 'ssh-asg'
+  name: '${priNetworkPrefix}-ssh-asg'
   location: primary_location
   tags: tags
 }
@@ -174,7 +177,7 @@ var allowSSHRule = {
 }
 
 resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subnetName in subnets: {
-  name: '${prefix}-pri-${subnetName}-subnet-nsg'
+  name: '${priNetworkPrefix}-pri-${subnetName}-subnet-nsg'
   location: primary_location
   tags: tags
   properties: {
@@ -196,7 +199,7 @@ resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' 
 }]
 
 resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subnetName in subnets: {
-  name: '${prefix}-dr-${subnetName}-subnet-nsg'
+  name: '${drNetworkPrefix}-dr-${subnetName}-subnet-nsg'
   location: dr_location
   tags: tags
 }]
