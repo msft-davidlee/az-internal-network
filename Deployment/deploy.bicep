@@ -176,6 +176,66 @@ var allowSSHRule = {
   }
 }
 
+var allowHttp = {
+  name: 'AllowHttp'
+  properties: {
+    description: 'Allow HTTP'
+    priority: 100
+    protocol: 'Tcp'
+    direction: 'Inbound'
+    access: 'Allow'
+    sourceAddressPrefix: sourceIp
+    sourcePortRange: '*'
+    destinationPortRange: '80'
+    destinationAddressPrefix: '*'
+  }
+}
+
+var allowHttps = {
+  name: 'AllowHttps'
+  properties: {
+    description: 'Allow HTTPS'
+    priority: 110
+    protocol: 'Tcp'
+    direction: 'Inbound'
+    access: 'Allow'
+    sourceAddressPrefix: sourceIp
+    sourcePortRange: '*'
+    destinationPortRange: '443'
+    destinationAddressPrefix: '*'
+  }
+}
+
+var allowFrontdoorOnHttp = {
+  name: 'AllowFrontdoorHttp'
+  properties: {
+    description: 'Allow Frontdoor on HTTPS'
+    priority: 120
+    protocol: 'Tcp'
+    direction: 'Inbound'
+    access: 'Allow'
+    sourceAddressPrefix: 'AzureFrontDoor.Backend'
+    sourcePortRange: '*'
+    destinationPortRange: '80'
+    destinationAddressPrefix: '*'
+  }
+}
+
+var allowFrontdoorOnHttps = {
+  name: 'AllowFrontdoorHttps'
+  properties: {
+    description: 'Allow Frontdoor on HTTPS'
+    priority: 130
+    protocol: 'Tcp'
+    direction: 'Inbound'
+    access: 'Allow'
+    sourceAddressPrefix: 'AzureFrontDoor.Backend'
+    sourcePortRange: '*'
+    destinationPortRange: '443'
+    destinationAddressPrefix: '*'
+  }
+}
+
 resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subnetName in subnets: {
   name: '${priNetworkPrefix}-pri-${subnetName}-subnet-nsg'
   location: primary_location
@@ -183,6 +243,11 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for sub
   properties: {
     securityRules: (subnetName == 'default') ? [
       allowSSHRule
+    ] : (subnetName == 'aks') ? [
+      allowHttp
+      allowHttps
+      allowFrontdoorOnHttp
+      allowFrontdoorOnHttps
     ] : []
   }
 }]
