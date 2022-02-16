@@ -118,10 +118,6 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
 resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
   name: '${priNetworkPrefix}-pri-to-dr-peer'
   parent: primary_vnet
-  dependsOn: [
-    primary_vnet
-    dr_vnet
-  ]
   properties: {
     allowVirtualNetworkAccess: true
     allowForwardedTraffic: false
@@ -136,10 +132,6 @@ resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerin
 resource dr_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
   name: '${drNetworkPrefix}-dr-to-pri-peer'
   parent: dr_vnet
-  dependsOn: [
-    primary_vnet
-    dr_vnet
-  ]
   properties: {
     allowVirtualNetworkAccess: true
     allowForwardedTraffic: false
