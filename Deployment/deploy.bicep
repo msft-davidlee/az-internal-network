@@ -9,9 +9,10 @@ var priNetworkPrefix = toLower('${prefix}-${primary_location}')
 var drNetworkPrefix = toLower('${prefix}-${dr_location}')
 
 var tags = {
-  'stack-name': '${prefix}-v2'
-  'environment': toLower(replace(environment, '_', ''))
-  'branch': branch
+  'stack-name': prefix
+  'stack-version': '2'
+  'stack-environment': toLower(replace(environment, '_', ''))
+  'stack-branch': branch
 }
 
 var subnets = [
@@ -118,12 +119,6 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
 resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
   name: '${priNetworkPrefix}-pri-to-dr-peer'
   parent: primary_vnet
-  dependsOn: [
-#disable-next-line no-unnecessary-dependson
-    primary_vnet
-#disable-next-line no-unnecessary-dependson
-    dr_vnet
-  ]
   properties: {
     allowVirtualNetworkAccess: true
     allowForwardedTraffic: false
@@ -138,12 +133,6 @@ resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerin
 resource dr_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
   name: '${drNetworkPrefix}-dr-to-pri-peer'
   parent: dr_vnet
-  dependsOn: [
-#disable-next-line no-unnecessary-dependson
-    primary_vnet
-#disable-next-line no-unnecessary-dependson
-    dr_vnet
-  ]
   properties: {
     allowVirtualNetworkAccess: true
     allowForwardedTraffic: false
@@ -226,7 +215,7 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for sub
   location: primary_location
   tags: tags
   properties: {
-    securityRules:  (subnetName == 'aks') ? [
+    securityRules: (subnetName == 'aks') ? [
       allowHttp
       allowHttps
       allowFrontdoorOnHttp
@@ -243,6 +232,15 @@ resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' 
     networkSecurityGroup: {
       id: prinsgs[i].id
     }
+    delegations: [
+      {
+        name: '0'
+        type: 'Microsoft.Network/virtualNetworks/subnets/delegations'
+        properties: {
+          serviceName: 'Microsoft.ContainerInstance/containerGroups'
+        }
+      }
+    ]
   }
 }]
 
