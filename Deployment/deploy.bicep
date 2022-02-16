@@ -9,9 +9,10 @@ var priNetworkPrefix = toLower('${prefix}-${primary_location}')
 var drNetworkPrefix = toLower('${prefix}-${dr_location}')
 
 var tags = {
-  'stack-name': '${prefix}-v2'
-  'environment': toLower(replace(environment, '_', ''))
-  'branch': branch
+  'stack-name': prefix
+  'stack-version': '2'
+  'stack-environment': toLower(replace(environment, '_', ''))
+  'stack-branch': branch
 }
 
 var subnets = [
@@ -118,10 +119,6 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
 resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
   name: '${priNetworkPrefix}-pri-to-dr-peer'
   parent: primary_vnet
-  dependsOn: [
-    primary_vnet
-    dr_vnet
-  ]
   properties: {
     allowVirtualNetworkAccess: true
     allowForwardedTraffic: false
@@ -136,10 +133,6 @@ resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerin
 resource dr_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
   name: '${drNetworkPrefix}-dr-to-pri-peer'
   parent: dr_vnet
-  dependsOn: [
-    primary_vnet
-    dr_vnet
-  ]
   properties: {
     allowVirtualNetworkAccess: true
     allowForwardedTraffic: false
@@ -148,31 +141,6 @@ resource dr_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@20
     remoteVirtualNetwork: {
       id: primary_vnet.id
     }
-  }
-}
-
-resource vmasg 'Microsoft.Network/applicationSecurityGroups@2021-02-01' = {
-  name: '${priNetworkPrefix}-ssh-asg'
-  location: primary_location
-  tags: tags
-}
-
-var allowSSHRule = {
-  name: 'AllowSSH'
-  properties: {
-    description: 'Allow SSH'
-    priority: 100
-    protocol: 'Tcp'
-    direction: 'Inbound'
-    access: 'Allow'
-    sourceAddressPrefix: sourceIp
-    sourcePortRange: '*'
-    destinationPortRange: '22'
-    destinationApplicationSecurityGroups: [
-      {
-        id: vmasg.id
-      }
-    ]
   }
 }
 
@@ -241,9 +209,7 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for sub
   location: primary_location
   tags: tags
   properties: {
-    securityRules: (subnetName == 'default') ? [
-      allowSSHRule
-    ] : (subnetName == 'aks') ? [
+    securityRules: (subnetName == 'aks') ? [
       allowHttp
       allowHttps
       allowFrontdoorOnHttp
