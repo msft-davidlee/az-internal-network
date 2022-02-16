@@ -234,8 +234,7 @@ resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' 
     }
     delegations: [
       {
-        name: '0'
-        type: 'Microsoft.Network/virtualNetworks/subnets/delegations'
+        name: 'Microsoft.ContainerInstance/containerGroups'        
         properties: {
           serviceName: 'Microsoft.ContainerInstance/containerGroups'
         }
