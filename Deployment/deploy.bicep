@@ -232,14 +232,6 @@ resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' 
     networkSecurityGroup: {
       id: prinsgs[i].id
     }
-    delegations: [
-      {
-        name: 'Microsoft.ContainerInstance/containerGroups'        
-        properties: {
-          serviceName: 'Microsoft.ContainerInstance/containerGroups'
-        }
-      }
-    ]
   }
 }]
 
