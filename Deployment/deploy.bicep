@@ -157,25 +157,6 @@ resource vmasg 'Microsoft.Network/applicationSecurityGroups@2021-02-01' = {
   tags: tags
 }
 
-var allowSSHRule = {
-  name: 'AllowSSH'
-  properties: {
-    description: 'Allow SSH'
-    priority: 100
-    protocol: 'Tcp'
-    direction: 'Inbound'
-    access: 'Allow'
-    sourceAddressPrefix: sourceIp
-    sourcePortRange: '*'
-    destinationPortRange: '22'
-    destinationApplicationSecurityGroups: [
-      {
-        id: vmasg.id
-      }
-    ]
-  }
-}
-
 var allowHttp = {
   name: 'AllowHttp'
   properties: {
@@ -241,9 +222,7 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for sub
   location: primary_location
   tags: tags
   properties: {
-    securityRules: (subnetName == 'default') ? [
-      allowSSHRule
-    ] : (subnetName == 'aks') ? [
+    securityRules:  (subnetName == 'aks') ? [
       allowHttp
       allowHttps
       allowFrontdoorOnHttp
