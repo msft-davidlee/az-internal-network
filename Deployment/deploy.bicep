@@ -4,13 +4,14 @@ param environment string
 param prefix string
 param branch string
 param sourceIp string
+param version string
 
 var priNetworkPrefix = toLower('${prefix}-${primary_location}')
 var drNetworkPrefix = toLower('${prefix}-${dr_location}')
 
 var tags = {
   'stack-name': prefix
-  'stack-version': '2'
+  'stack-version': version
   'stack-environment': toLower(replace(environment, '_', ''))
   'stack-branch': branch
 }
