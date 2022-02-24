@@ -39,20 +39,10 @@ resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         '10.0.0.0/16'
       ]
     }
-    subnets: [for (subnetName, i) in subnets: (subnetName == 'containerappcontrol') ? {
+    subnets: [for (subnetName, i) in subnets: {
       name: subnetName
       properties: {
-        addressPrefix: '10.1.0.0/21'
-      }
-    } : (subnetName == 'containerapp') ? {
-      name: subnetName
-      properties: {
-        addressPrefix: '10.2.0.0/21'
-      }
-    } : {
-      name: subnetName
-      properties: {
-        addressPrefix: '10.0.${i}.0/24'
+        addressPrefix: (startsWith(subnetName, 'containerapp')) ? '10.0.${i}.0/21' : '10.0.${i}.0/24'
         serviceEndpoints: (startsWith(subnetName, 'appsvc')) ? [
           {
             service: 'Microsoft.Sql'
@@ -94,20 +84,10 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         '172.16.0.0/16'
       ]
     }
-    subnets: [for (subnetName, i) in subnets: (subnetName == 'containerappcontrol') ? {
+    subnets: [for (subnetName, i) in subnets: {
       name: subnetName
       properties: {
-        addressPrefix: '172.17.0.0/21'
-      }
-    } : (subnetName == 'containerapp') ? {
-      name: subnetName
-      properties: {
-        addressPrefix: '172.18.0.0/21'
-      }
-    } : {
-      name: subnetName
-      properties: {
-        addressPrefix: '172.16.${i}.0/24'
+        addressPrefix: (startsWith(subnetName, 'containerapp')) ? '172.16.${i}.0/21' : '172.16.${i}.0/24'
         serviceEndpoints: (startsWith(subnetName, 'appsvc')) ? [
           {
             service: 'Microsoft.Sql'
