@@ -212,7 +212,7 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for sub
   location: primary_location
   tags: tags
   properties: {
-    securityRules: (subnetName == 'aks') ? [
+    securityRules: (subnetName == 'aks' || startsWith(subnetName, 'containerapp')) ? [
       allowHttp
       allowHttps
       allowFrontdoorOnHttp
@@ -236,6 +236,14 @@ resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subn
   name: '${drNetworkPrefix}-dr-${subnetName}-subnet-nsg'
   location: dr_location
   tags: tags
+  properties: {
+    securityRules: (subnetName == 'aks' || startsWith(subnetName, 'containerapp')) ? [
+      allowHttp
+      allowHttps
+      allowFrontdoorOnHttp
+      allowFrontdoorOnHttps
+    ] : []
+  }
 }]
 
 @batchSize(1)
