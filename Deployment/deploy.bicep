@@ -25,6 +25,8 @@ var subnets = [
   'appsvcaltid'
   'appsvcpartapi'
   'appsvcbackend'
+  'containerappcontrol'
+  'containerapp'
 ]
 
 resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
@@ -37,7 +39,13 @@ resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         '10.0.0.0/16'
       ]
     }
-    subnets: [for (subnetName, i) in subnets: {
+    subnets: [for (subnetName, i) in subnets: (subnetName == 'containerappcontrol') ? {
+      name: subnetName
+      addressPrefix: '10.1.0.0/21'
+    } : (subnetName == 'containerapp') ? {
+      name: subnetName
+      addressPrefix: '10.2.0.0/21'
+    } : {
       name: subnetName
       properties: {
         addressPrefix: '10.0.${i}.0/24'
@@ -82,7 +90,13 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         '172.16.0.0/16'
       ]
     }
-    subnets: [for (subnetName, i) in subnets: {
+    subnets: [for (subnetName, i) in subnets: (subnetName == 'containerappcontrol') ? {
+      name: subnetName
+      addressPrefix: '172.17.0.0/21'
+    } : (subnetName == 'containerapp') ? {
+      name: subnetName
+      addressPrefix: '172.18.0.0/21'
+    } : {
       name: subnetName
       properties: {
         addressPrefix: '172.16.${i}.0/24'
