@@ -45,32 +45,6 @@ resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
       name: subnetName
       properties: {
         addressPrefix: (subnetName == 'containerappcontrol') ? '10.0.96.0/21' : (subnetName == 'containerapp') ? '10.0.104.0/21' : '10.0.${i}.0/24'
-        serviceEndpoints: (startsWith(subnetName, 'appsvc')) ? [
-          {
-            service: 'Microsoft.Sql'
-            locations: [
-              primary_location
-            ]
-          }
-          {
-            service: 'Microsoft.Storage'
-            locations: [
-              primary_location
-            ]
-          }
-          {
-            service: 'Microsoft.ServiceBus'
-            locations: [
-              primary_location
-            ]
-          }
-          {
-            service: 'Microsoft.KeyVault'
-            locations: [
-              primary_location
-            ]
-          }
-        ] : []
       }
     }]
   }
@@ -90,32 +64,6 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
       name: subnetName
       properties: {
         addressPrefix: (subnetName == 'containerappcontrol') ? '172.16.96.0/21' : (subnetName == 'containerapp') ? '172.16.104.0/21' : '172.16.${i}.0/24'
-        serviceEndpoints: (startsWith(subnetName, 'appsvc')) ? [
-          {
-            service: 'Microsoft.Sql'
-            locations: [
-              dr_location
-            ]
-          }
-          {
-            service: 'Microsoft.Storage'
-            locations: [
-              dr_location
-            ]
-          }
-          {
-            service: 'Microsoft.ServiceBus'
-            locations: [
-              dr_location
-            ]
-          }
-          {
-            service: 'Microsoft.KeyVault'
-            locations: [
-              dr_location
-            ]
-          }
-        ] : []
       }
     }]
   }
@@ -223,6 +171,10 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for sub
   }
 }]
 
+// Note that all changes related to the subnet must be done on this level rathter than
+// on the Virtual network resource declaration above because otherwise, the changes
+// may be overwritten on this level.
+
 @batchSize(1)
 resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = [for (subnetName, i) in subnets: {
   name: '${primary_vnet.name}/${subnetName}'
@@ -231,6 +183,32 @@ resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' 
     networkSecurityGroup: {
       id: prinsgs[i].id
     }
+    serviceEndpoints: (startsWith(subnetName, 'appsvc')) ? [
+      {
+        service: 'Microsoft.Sql'
+        locations: [
+          primary_location
+        ]
+      }
+      {
+        service: 'Microsoft.Storage'
+        locations: [
+          primary_location
+        ]
+      }
+      {
+        service: 'Microsoft.ServiceBus'
+        locations: [
+          primary_location
+        ]
+      }
+      {
+        service: 'Microsoft.KeyVault'
+        locations: [
+          primary_location
+        ]
+      }
+    ] : []
     delegations: (subnetName == 'ase') ? [
       {
         name: 'webapp'
@@ -264,6 +242,32 @@ resource associatedrnsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' =
     networkSecurityGroup: {
       id: drnsgs[i].id
     }
+    serviceEndpoints: (startsWith(subnetName, 'appsvc')) ? [
+      {
+        service: 'Microsoft.Sql'
+        locations: [
+          dr_location
+        ]
+      }
+      {
+        service: 'Microsoft.Storage'
+        locations: [
+          dr_location
+        ]
+      }
+      {
+        service: 'Microsoft.ServiceBus'
+        locations: [
+          dr_location
+        ]
+      }
+      {
+        service: 'Microsoft.KeyVault'
+        locations: [
+          dr_location
+        ]
+      }
+    ] : []
     delegations: (subnetName == 'ase') ? [
       {
         name: 'webapp'
