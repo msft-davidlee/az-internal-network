@@ -73,14 +73,10 @@ resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         ] : []
         delegations: (subnetName == 'ase') ? [
           {
-            name: 'ase_0'
-            type: 'Microsoft.Network/virtualNetworks/subnets/delegations'
+            name: 'webapp'            
             properties: {
               serviceName: 'Microsoft.Web/hostingEnvironments'
             }
-            actions: [
-              'Microsoft.Network/virtualNetworks/subnets/join/action'
-            ]
           }
         ] : []
       }
