@@ -55,5 +55,4 @@ jobs:
             branch=${{ github.ref }} `
             environment=${{ needs.setup.outputs.build_env }} `
             sourceIp=${{ secrets.SOURCE_IP }} `
-            version=${{ github.run_number }} `
-            prefix=${{ secrets.RESOURCE_PREFIX }})
+            version=${{ github.run_number }}

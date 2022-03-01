@@ -1,10 +1,11 @@
 param primary_location string = 'centralus'
 param dr_location string = 'eastus2'
 param environment string
-param prefix string
+param prefix string = 'platform'
 param branch string
 param sourceIp string
 param version string
+param lastUpdated string = utcNow('u')
 
 var priNetworkPrefix = toLower('${prefix}-${primary_location}')
 var drNetworkPrefix = toLower('${prefix}-${dr_location}')
@@ -14,6 +15,7 @@ var tags = {
   'stack-version': version
   'stack-environment': toLower(replace(environment, '_', ''))
   'stack-branch': branch
+  'stack-last-updated': lastUpdated
 }
 
 var subnets = [
@@ -71,8 +73,6 @@ resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         ] : []
         delegations: (subnetName == 'ase') ? [
           {
-            name: '0'
-            type: 'Microsoft.Network/virtualNetworks/subnets/delegations'
             properties: {
               serviceName: 'Microsoft.Web/hostingEnvironments'
             }
