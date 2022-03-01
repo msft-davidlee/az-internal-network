@@ -69,6 +69,15 @@ resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
             ]
           }
         ] : []
+        delegations: (subnetName == 'ase') ? [
+          {
+            name: '0'
+            type: 'Microsoft.Network/virtualNetworks/subnets/delegations'
+            properties: {
+              serviceName: 'Microsoft.Web/hostingEnvironments'
+            }
+          }
+        ] : []
       }
     }]
   }
