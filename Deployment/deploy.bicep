@@ -31,7 +31,7 @@ var subnets = [
   'containerapp'
 ]
 
-resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
+resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: '${priNetworkPrefix}-pri-vnet'
   tags: tags
   location: primary_location
@@ -71,20 +71,12 @@ resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
             ]
           }
         ] : []
-        delegations: (subnetName == 'ase') ? [
-          {
-            name: 'webapp'            
-            properties: {
-              serviceName: 'Microsoft.Web/hostingEnvironments'
-            }
-          }
-        ] : []
       }
     }]
   }
 }
 
-resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
+resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: '${drNetworkPrefix}-dr-vnet'
   tags: tags
   location: dr_location
@@ -129,7 +121,7 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   }
 }
 
-resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
+resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-05-01' = {
   name: '${priNetworkPrefix}-pri-to-dr-peer'
   parent: primary_vnet
   properties: {
@@ -143,7 +135,7 @@ resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerin
   }
 }
 
-resource dr_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
+resource dr_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-05-01' = {
   name: '${drNetworkPrefix}-dr-to-pri-peer'
   parent: dr_vnet
   properties: {
@@ -217,7 +209,7 @@ var allowFrontdoorOnHttps = {
   }
 }
 
-resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subnetName in subnets: {
+resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for subnetName in subnets: {
   name: '${priNetworkPrefix}-pri-${subnetName}-subnet-nsg'
   location: primary_location
   tags: tags
@@ -232,17 +224,25 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for sub
 }]
 
 @batchSize(1)
-resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = [for (subnetName, i) in subnets: {
+resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = [for (subnetName, i) in subnets: {
   name: '${primary_vnet.name}/${subnetName}'
   properties: {
     addressPrefix: primary_vnet.properties.subnets[i].properties.addressPrefix
     networkSecurityGroup: {
       id: prinsgs[i].id
     }
+    delegations: (subnetName == 'ase') ? [
+      {
+        name: 'webapp'
+        properties: {
+          serviceName: 'Microsoft.Web/hostingEnvironments'
+        }
+      }
+    ] : []
   }
 }]
 
-resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subnetName in subnets: {
+resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for subnetName in subnets: {
   name: '${drNetworkPrefix}-dr-${subnetName}-subnet-nsg'
   location: dr_location
   tags: tags
@@ -257,12 +257,20 @@ resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subn
 }]
 
 @batchSize(1)
-resource associatedrnsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = [for (subnetName, i) in subnets: {
+resource associatedrnsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = [for (subnetName, i) in subnets: {
   name: '${dr_vnet.name}/${subnetName}'
   properties: {
     addressPrefix: dr_vnet.properties.subnets[i].properties.addressPrefix
     networkSecurityGroup: {
       id: drnsgs[i].id
     }
+    delegations: (subnetName == 'ase') ? [
+      {
+        name: 'webapp'
+        properties: {
+          serviceName: 'Microsoft.Web/hostingEnvironments'
+        }
+      }
+    ] : []
   }
 }]
