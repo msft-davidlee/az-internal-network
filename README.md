@@ -24,6 +24,5 @@ Consider which is your primary and DR region. Any primary region should be paire
 | Name | Value |
 | --- | --- |
 | MS_AZURE_CREDENTIALS | <pre>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;"clientId": "",<br/>&nbsp;&nbsp;&nbsp;&nbsp;"clientSecret": "", <br/>&nbsp;&nbsp;&nbsp;&nbsp;"subscriptionId": "",<br/>&nbsp;&nbsp;&nbsp;&nbsp;"tenantId": "" <br/>}</pre> |
-| RESOURCE_PREFIX | platform |
 | RESOURCE_GROUP | networking |
 | SOURCE_IP | some services allow http/https from specific location so your office/home IP can be used here |

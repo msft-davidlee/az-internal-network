@@ -1,10 +1,11 @@
 param primary_location string = 'centralus'
 param dr_location string = 'eastus2'
 param environment string
-param prefix string
+param prefix string = 'platform'
 param branch string
 param sourceIp string
 param version string
+param lastUpdated string = utcNow('u')
 
 var priNetworkPrefix = toLower('${prefix}-${primary_location}')
 var drNetworkPrefix = toLower('${prefix}-${dr_location}')
@@ -14,6 +15,7 @@ var tags = {
   'stack-version': version
   'stack-environment': toLower(replace(environment, '_', ''))
   'stack-branch': branch
+  'stack-last-updated': lastUpdated
 }
 
 var subnets = [
@@ -25,9 +27,11 @@ var subnets = [
   'appsvcaltid'
   'appsvcpartapi'
   'appsvcbackend'
+  'containerappcontrol'
+  'containerapp'
 ]
 
-resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
+resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: '${priNetworkPrefix}-pri-vnet'
   tags: tags
   location: primary_location
@@ -40,39 +44,13 @@ resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
     subnets: [for (subnetName, i) in subnets: {
       name: subnetName
       properties: {
-        addressPrefix: '10.0.${i}.0/24'
-        serviceEndpoints: (startsWith(subnetName, 'appsvc')) ? [
-          {
-            service: 'Microsoft.Sql'
-            locations: [
-              primary_location
-            ]
-          }
-          {
-            service: 'Microsoft.Storage'
-            locations: [
-              primary_location
-            ]
-          }
-          {
-            service: 'Microsoft.ServiceBus'
-            locations: [
-              primary_location
-            ]
-          }
-          {
-            service: 'Microsoft.KeyVault'
-            locations: [
-              primary_location
-            ]
-          }
-        ] : []
+        addressPrefix: (subnetName == 'containerappcontrol') ? '10.0.96.0/21' : (subnetName == 'containerapp') ? '10.0.104.0/21' : '10.0.${i}.0/24'
       }
     }]
   }
 }
 
-resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
+resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   name: '${drNetworkPrefix}-dr-vnet'
   tags: tags
   location: dr_location
@@ -85,39 +63,13 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
     subnets: [for (subnetName, i) in subnets: {
       name: subnetName
       properties: {
-        addressPrefix: '172.16.${i}.0/24'
-        serviceEndpoints: (startsWith(subnetName, 'appsvc')) ? [
-          {
-            service: 'Microsoft.Sql'
-            locations: [
-              dr_location
-            ]
-          }
-          {
-            service: 'Microsoft.Storage'
-            locations: [
-              dr_location
-            ]
-          }
-          {
-            service: 'Microsoft.ServiceBus'
-            locations: [
-              dr_location
-            ]
-          }
-          {
-            service: 'Microsoft.KeyVault'
-            locations: [
-              dr_location
-            ]
-          }
-        ] : []
+        addressPrefix: (subnetName == 'containerappcontrol') ? '172.16.96.0/21' : (subnetName == 'containerapp') ? '172.16.104.0/21' : '172.16.${i}.0/24'
       }
     }]
   }
 }
 
-resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
+resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-05-01' = {
   name: '${priNetworkPrefix}-pri-to-dr-peer'
   parent: primary_vnet
   properties: {
@@ -131,7 +83,7 @@ resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerin
   }
 }
 
-resource dr_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
+resource dr_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-05-01' = {
   name: '${drNetworkPrefix}-dr-to-pri-peer'
   parent: dr_vnet
   properties: {
@@ -205,12 +157,75 @@ var allowFrontdoorOnHttps = {
   }
 }
 
-resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subnetName in subnets: {
+resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for subnetName in subnets: {
   name: '${priNetworkPrefix}-pri-${subnetName}-subnet-nsg'
   location: primary_location
   tags: tags
   properties: {
-    securityRules: (subnetName == 'aks') ? [
+    securityRules: (subnetName == 'aks' || startsWith(subnetName, 'containerapp')) ? [
+      allowHttp
+      allowHttps
+      allowFrontdoorOnHttp
+      allowFrontdoorOnHttps
+    ] : []
+  }
+}]
+
+// Note that all changes related to the subnet must be done on this level rathter than
+// on the Virtual network resource declaration above because otherwise, the changes
+// may be overwritten on this level.
+
+@batchSize(1)
+resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = [for (subnetName, i) in subnets: {
+  name: '${primary_vnet.name}/${subnetName}'
+  properties: {
+    addressPrefix: primary_vnet.properties.subnets[i].properties.addressPrefix
+    networkSecurityGroup: {
+      id: prinsgs[i].id
+    }
+    serviceEndpoints: (startsWith(subnetName, 'appsvc')) ? [
+      {
+        service: 'Microsoft.Sql'
+        locations: [
+          primary_location
+        ]
+      }
+      {
+        service: 'Microsoft.Storage'
+        locations: [
+          primary_location
+        ]
+      }
+      {
+        service: 'Microsoft.ServiceBus'
+        locations: [
+          primary_location
+        ]
+      }
+      {
+        service: 'Microsoft.KeyVault'
+        locations: [
+          primary_location
+        ]
+      }
+    ] : []
+    delegations: (subnetName == 'ase') ? [
+      {
+        name: 'webapp'
+        properties: {
+          serviceName: 'Microsoft.Web/hostingEnvironments'
+        }
+      }
+    ] : []
+  }
+}]
+
+resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for subnetName in subnets: {
+  name: '${drNetworkPrefix}-dr-${subnetName}-subnet-nsg'
+  location: dr_location
+  tags: tags
+  properties: {
+    securityRules: (subnetName == 'aks' || startsWith(subnetName, 'containerapp')) ? [
       allowHttp
       allowHttps
       allowFrontdoorOnHttp
@@ -220,29 +235,46 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for sub
 }]
 
 @batchSize(1)
-resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = [for (subnetName, i) in subnets: {
-  name: '${primary_vnet.name}/${subnetName}'
-  properties: {
-    addressPrefix: primary_vnet.properties.subnets[i].properties.addressPrefix
-    networkSecurityGroup: {
-      id: prinsgs[i].id
-    }
-  }
-}]
-
-resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-02-01' = [for subnetName in subnets: {
-  name: '${drNetworkPrefix}-dr-${subnetName}-subnet-nsg'
-  location: dr_location
-  tags: tags
-}]
-
-@batchSize(1)
-resource associatedrnsg 'Microsoft.Network/virtualNetworks/subnets@2021-02-01' = [for (subnetName, i) in subnets: {
+resource associatedrnsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = [for (subnetName, i) in subnets: {
   name: '${dr_vnet.name}/${subnetName}'
   properties: {
     addressPrefix: dr_vnet.properties.subnets[i].properties.addressPrefix
     networkSecurityGroup: {
       id: drnsgs[i].id
     }
+    serviceEndpoints: (startsWith(subnetName, 'appsvc')) ? [
+      {
+        service: 'Microsoft.Sql'
+        locations: [
+          dr_location
+        ]
+      }
+      {
+        service: 'Microsoft.Storage'
+        locations: [
+          dr_location
+        ]
+      }
+      {
+        service: 'Microsoft.ServiceBus'
+        locations: [
+          dr_location
+        ]
+      }
+      {
+        service: 'Microsoft.KeyVault'
+        locations: [
+          dr_location
+        ]
+      }
+    ] : []
+    delegations: (subnetName == 'ase') ? [
+      {
+        name: 'webapp'
+        properties: {
+          serviceName: 'Microsoft.Web/hostingEnvironments'
+        }
+      }
+    ] : []
   }
 }]
