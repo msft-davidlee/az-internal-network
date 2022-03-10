@@ -190,6 +190,8 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for sub
       allowFrontdoorOnHttp
       allowFrontdoorOnHttps
     ] : (subnetName == 'appgw') ? [
+      allowHttp
+      allowHttps
       allowAppGatewayV2
     ] : []
   }
@@ -255,6 +257,8 @@ resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for subn
       allowFrontdoorOnHttp
       allowFrontdoorOnHttps
     ] : (subnetName == 'appgw') ? [
+      allowHttp
+      allowHttps
       allowAppGatewayV2
     ] : []
   }
