@@ -27,6 +27,7 @@ var subnets = [
   'appsvcaltid'
   'appsvcpartapi'
   'appsvcbackend'
+  'appgw'
   'containerappcontrol'
   'containerapp'
 ]
@@ -157,6 +158,21 @@ var allowFrontdoorOnHttps = {
   }
 }
 
+var allowAppGatewayV2 = {
+  name: 'AllowApplicationGatewayV2Traffic'
+  properties: {
+    description: 'Allow Application Gateway V2 traffic'
+    priority: 140
+    protocol: 'Tcp'
+    direction: 'Inbound'
+    access: 'Allow'
+    sourceAddressPrefix: 'GatewayManager'
+    sourcePortRange: '65200-65535'
+    destinationPortRange: '*'
+    destinationAddressPrefix: '*'
+  }
+}
+
 resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for subnetName in subnets: {
   name: '${priNetworkPrefix}-pri-${subnetName}-subnet-nsg'
   location: primary_location
@@ -167,6 +183,8 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for sub
       allowHttps
       allowFrontdoorOnHttp
       allowFrontdoorOnHttps
+    ] : (subnetName == 'appGw') ? [
+      allowAppGatewayV2
     ] : []
   }
 }]
@@ -230,6 +248,8 @@ resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for subn
       allowHttps
       allowFrontdoorOnHttp
       allowFrontdoorOnHttps
+    ] : (subnetName == 'appGw') ? [
+      allowAppGatewayV2
     ] : []
   }
 }]
