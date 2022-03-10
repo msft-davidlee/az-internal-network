@@ -27,6 +27,11 @@ var subnets = [
   'appsvcaltid'
   'appsvcpartapi'
   'appsvcbackend'
+  'appgw'
+  // Typically, we are using /24 to define subnet size. However, note that Azure Container Apps 
+  // subnets are special because they require a larger subnet size so if we are adding a new subnet, 
+  // it should be added on top of this comment as we are using the index of array as the subnet like 
+  // 10.0.0.0/24 would be for default, 10.0.1.0/24 would be for ase etc.
   'containerappcontrol'
   'containerapp'
 ]
@@ -157,6 +162,23 @@ var allowFrontdoorOnHttps = {
   }
 }
 
+// See: https://docs.microsoft.com/en-us/azure/application-gateway/configuration-infrastructure#network-security-groups
+// 
+var allowAppGatewayV2 = {
+  name: 'AllowApplicationGatewayV2Traffic'
+  properties: {
+    description: 'Allow Application Gateway V2 traffic'
+    priority: 140
+    protocol: 'Tcp'
+    direction: 'Inbound'
+    access: 'Allow'
+    sourceAddressPrefix: 'GatewayManager'
+    sourcePortRange: '65200-65535'
+    destinationPortRange: '*'
+    destinationAddressPrefix: '*'
+  }
+}
+
 resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for subnetName in subnets: {
   name: '${priNetworkPrefix}-pri-${subnetName}-subnet-nsg'
   location: primary_location
@@ -167,6 +189,8 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for sub
       allowHttps
       allowFrontdoorOnHttp
       allowFrontdoorOnHttps
+    ] : (subnetName == 'appgw') ? [
+      allowAppGatewayV2
     ] : []
   }
 }]
@@ -230,6 +254,8 @@ resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for subn
       allowHttps
       allowFrontdoorOnHttp
       allowFrontdoorOnHttps
+    ] : (subnetName == 'appgw') ? [
+      allowAppGatewayV2
     ] : []
   }
 }]
