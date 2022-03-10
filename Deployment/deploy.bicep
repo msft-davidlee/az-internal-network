@@ -162,6 +162,8 @@ var allowFrontdoorOnHttps = {
   }
 }
 
+// See: https://docs.microsoft.com/en-us/azure/application-gateway/configuration-infrastructure#network-security-groups
+// 
 var allowAppGatewayV2 = {
   name: 'AllowApplicationGatewayV2Traffic'
   properties: {
