@@ -234,6 +234,13 @@ resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' 
           primary_location
         ]
       }
+    ] : (subnetName == 'appgw') ? [
+      {
+        service: 'Microsoft.Web'
+        locations: [
+          primary_location
+        ]
+      }
     ] : []
     delegations: (subnetName == 'ase') ? [
       {
@@ -293,6 +300,13 @@ resource associatedrnsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' =
       }
       {
         service: 'Microsoft.KeyVault'
+        locations: [
+          dr_location
+        ]
+      }
+    ] : (subnetName == 'appgw') ? [
+      {
+        service: 'Microsoft.Web'
         locations: [
           dr_location
         ]
