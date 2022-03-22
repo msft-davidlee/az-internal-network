@@ -63,7 +63,7 @@ jobs:
           resourceGroupName: ${{ steps.resolve-shared-resources.outputs.resourceGroup }}
           template: ./deployment/deploy.bicep
           parameters: >
-            branch=${{ github.ref }} `
-            environment=${{ needs.setup.outputs.build_env }} `
-            sourceIp=${{ secrets.SOURCE_IP }} `
-            version=${{ github.run_number }})
+            branch=${{ github.ref }}
+            environment=${{ needs.setup.outputs.build_env }}
+            sourceIp=${{ secrets.SOURCE_IP }}
+            version=${{ github.run_number }}
