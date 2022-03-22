@@ -1,5 +1,7 @@
 on: 
   push:
+    paths-ignore: 
+      - 'README.md'  
   workflow_dispatch:
     inputs:
       environmentselector:
@@ -47,12 +49,21 @@ jobs:
           creds: ${{ secrets.MS_AZURE_CREDENTIALS }}
           enable-AzPSSession: true
 
-      - id: buid-and-deploy
-        name: Build Azure environment
+      - id: resolve-shared-resources
+        name: Resolve shared resources
+        working-directory: .\deployment
         run: |
-          $deploymentName = "networkdeploy" + (Get-Date).ToString("yyyyMMddHHmmss")
-          $deployOutputText = (az deployment group create --name $deploymentName --resource-group ${{ secrets.RESOURCE_GROUP }} --template-file Deployment/deploy.bicep --parameters `
-            branch=${{ github.ref }} `
-            environment=${{ needs.setup.outputs.build_env }} `
-            sourceIp=${{ secrets.SOURCE_IP }} `
-            version=${{ github.run_number }})
+          .\ResolveSharedResources.ps1 -BUILD_ENV ${{ needs.setup.outputs.build_env }}
+
+      - name: Build azure environment
+        id: deploy
+        uses: azure/arm-deploy@v1
+        with:
+          deploymentName: 'deploy-${{ needs.setup.outputs.build_env }}-${{ github.run_number }}'
+          resourceGroupName: ${{ steps.resolve-shared-resources.outputs.resourceGroup }}
+          template: ./deployment/deploy.bicep
+          parameters: >
+            branch=${{ github.ref }}
+            environment=${{ needs.setup.outputs.build_env }}
+            sourceIp=${{ secrets.SOURCE_IP }}
+            version=${{ github.run_number }}
