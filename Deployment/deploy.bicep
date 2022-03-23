@@ -62,7 +62,7 @@ resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   properties: {
     addressSpace: {
       addressPrefixes: [
-        '172.16.0.0/16'
+        '172.0.0.0/16'
       ]
     }
     subnets: [for (subnetName, i) in subnets: {
