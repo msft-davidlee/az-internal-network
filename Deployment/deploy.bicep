@@ -11,11 +11,12 @@ var priNetworkPrefix = toLower('${prefix}-${primary_location}')
 var drNetworkPrefix = toLower('${prefix}-${dr_location}')
 
 var tags = {
-  'stack-name': prefix
+  'stack-name': 'networking'
   'stack-version': version
   'stack-environment': toLower(replace(environment, '_', ''))
   'stack-branch': branch
   'stack-last-updated': lastUpdated
+  'stack-sub-name': 'platform'
 }
 
 var subnets = [
