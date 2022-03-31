@@ -210,7 +210,7 @@ resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' 
     networkSecurityGroup: {
       id: prinsgs[i].id
     }
-    serviceEndpoints: (startsWith(subnetName, 'appsvc')) ? [
+    serviceEndpoints: (startsWith(subnetName, 'appsvc') || subnetName == 'aks') ? [
       {
         service: 'Microsoft.Sql'
         locations: [
@@ -280,7 +280,7 @@ resource associatedrnsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' =
     networkSecurityGroup: {
       id: drnsgs[i].id
     }
-    serviceEndpoints: (startsWith(subnetName, 'appsvc')) ? [
+    serviceEndpoints: (startsWith(subnetName, 'appsvc') || subnetName == 'aks') ? [
       {
         service: 'Microsoft.Sql'
         locations: [
