@@ -8,6 +8,9 @@ on:
         description: 'Environment selector'     
         required: false
         default: 'default'
+env:
+  STACK_NAME_TAG: 'platform'
+  STACK_SUB_NAME_TAG: 'networking'
 
 jobs:
   setup:
@@ -67,3 +70,5 @@ jobs:
             environment=${{ needs.setup.outputs.build_env }}
             sourceIp=${{ secrets.SOURCE_IP }}
             version=${{ github.run_number }}
+            prefix=${{ env.STACK_NAME_TAG }}
+            subTagStackName=${{ env.STACK_SUB_NAME_TAG }}
