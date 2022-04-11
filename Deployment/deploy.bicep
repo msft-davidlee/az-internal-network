@@ -1,22 +1,23 @@
 param primary_location string = 'centralus'
 param dr_location string = 'eastus2'
 param environment string
-param prefix string = 'platform'
+param prefix string
 param branch string
 param sourceIp string
 param version string
 param lastUpdated string = utcNow('u')
+param subTagStackName string
 
 var priNetworkPrefix = toLower('${prefix}-${primary_location}')
 var drNetworkPrefix = toLower('${prefix}-${dr_location}')
 
 var tags = {
-  'stack-name': 'networking'
+  'stack-name': prefix
   'stack-version': version
   'stack-environment': toLower(replace(environment, '_', ''))
   'stack-branch': branch
   'stack-last-updated': lastUpdated
-  'stack-sub-name': 'platform'
+  'stack-sub-name': subTagStackName
 }
 
 var subnets = [
@@ -323,3 +324,26 @@ resource associatedrnsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' =
     ] : []
   }
 }]
+
+var aksIPTags = {
+  'stack-name': 'aks-public-ip'
+  'stack-version': version
+  'stack-environment': toLower(replace(environment, '_', ''))
+  'stack-branch': branch
+  'stack-last-updated': lastUpdated
+  'stack-sub-name': subTagStackName
+}
+
+resource aksStaticIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (environment == 'prod') {
+  name: '${prefix}-aks-pip'
+  tags: aksIPTags
+  location: primary_location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    publicIPAddressVersion: 'IPv4'
+  }
+}
