@@ -334,7 +334,7 @@ var aksIPTags = {
   'stack-sub-name': subTagStackName
 }
 
-resource aksStaticIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource aksStaticIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (environment == 'prod') {
   name: '${prefix}-aks-pip'
   tags: aksIPTags
   location: primary_location
