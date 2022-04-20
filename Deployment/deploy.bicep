@@ -165,7 +165,6 @@ var allowFrontdoorOnHttps = {
 }
 
 // See: https://docs.microsoft.com/en-us/azure/application-gateway/configuration-infrastructure#network-security-groups
-// 
 var allowAppGatewayV2 = {
   name: 'AllowApplicationGatewayV2Traffic'
   properties: {
@@ -175,8 +174,8 @@ var allowAppGatewayV2 = {
     direction: 'Inbound'
     access: 'Allow'
     sourceAddressPrefix: 'GatewayManager'
-    sourcePortRange: '65200-65535'
-    destinationPortRange: '*'
+    sourcePortRange: '*'
+    destinationPortRange: '65200-65535'
     destinationAddressPrefix: '*'
   }
 }
