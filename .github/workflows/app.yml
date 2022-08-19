@@ -61,4 +61,4 @@ jobs:
           parameters: >            
             stackEnvironment=${{ needs.setup.outputs.build_env }}
             sourceIp=${{ steps.resolve-shared-resources.outputs.sourceIp }}            
-            prefix=${{ steps.resolve-shared-resources.outputs.prefix }}
+            prefix=dlt0

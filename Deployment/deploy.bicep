@@ -197,6 +197,9 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for sub
 @batchSize(1)
 resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = [for (subnetName, i) in subnets: {
   name: '${primary_vnet.name}/${subnetName}'
+  dependsOn: [
+    primary_peering
+  ]
   properties: {
     addressPrefix: primary_vnet.properties.subnets[i].properties.addressPrefix
     networkSecurityGroup: {
@@ -248,6 +251,9 @@ resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' 
 
 resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for subnetName in subnets: {
   name: '${drNetworkPrefix}-dr-${subnetName}-subnet-nsg'
+  dependsOn: [
+    dr_peering
+  ]
   location: dr_location
   tags: tags
   properties: {
