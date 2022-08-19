@@ -12,7 +12,8 @@ To create this networking environment in your Azure subscription, please follow 
 
 1. Fork this git repo. See: https://docs.github.com/en/get-started/quickstart/fork-a-repo
 2. Follow the steps in https://github.com/msft-davidlee/contoso-governance to create the necessary resources via Azure Blueprint.
-3. Create the following secret(s) in your github per environment. Be sure to populate with your desired values. The values below are all suggestions.
+3. Run UpdateConfig.ps1 which will configure your source IP address. This will configure network access to http/https services from your office/home IP.
+4. Create the following secret(s) in your github per environment. Be sure to populate with your desired values. The values below are all suggestions.
 
 ## Picking Regions
 Consider which is your primary and DR region. Any primary region should be paired with a DR region that is documented as a paired region: https://docs.microsoft.com/en-us/azure/best-practices-availability-paired-regions. The regions are hardcoded in the app.yml file which you can edit and modify.
@@ -21,4 +22,3 @@ Consider which is your primary and DR region. Any primary region should be paire
 | Name | Value |
 | --- | --- |
 | MS_AZURE_CREDENTIALS | <pre>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;"clientId": "",<br/>&nbsp;&nbsp;&nbsp;&nbsp;"clientSecret": "", <br/>&nbsp;&nbsp;&nbsp;&nbsp;"subscriptionId": "",<br/>&nbsp;&nbsp;&nbsp;&nbsp;"tenantId": "" <br/>}</pre> |
-| SOURCE_IP | some services allow http/https from specific location so your office/home IP can be used here |
