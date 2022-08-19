@@ -1,23 +1,15 @@
 param primary_location string = 'centralus'
 param dr_location string = 'eastus2'
-param environment string
+param stackEnvironment string
 param prefix string
-param branch string
 param sourceIp string
-param version string
-param lastUpdated string = utcNow('u')
-param subTagStackName string
 
 var priNetworkPrefix = toLower('${prefix}-${primary_location}')
 var drNetworkPrefix = toLower('${prefix}-${dr_location}')
 
 var tags = {
   'stack-name': prefix
-  'stack-version': version
-  'stack-environment': toLower(replace(environment, '_', ''))
-  'stack-branch': branch
-  'stack-last-updated': lastUpdated
-  'stack-sub-name': subTagStackName
+  'stack-environment': toLower(replace(stackEnvironment, '_', ''))
 }
 
 var subnets = [
@@ -205,6 +197,9 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for sub
 @batchSize(1)
 resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = [for (subnetName, i) in subnets: {
   name: '${primary_vnet.name}/${subnetName}'
+  dependsOn: [
+    primary_peering
+  ]
   properties: {
     addressPrefix: primary_vnet.properties.subnets[i].properties.addressPrefix
     networkSecurityGroup: {
@@ -256,6 +251,9 @@ resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' 
 
 resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for subnetName in subnets: {
   name: '${drNetworkPrefix}-dr-${subnetName}-subnet-nsg'
+  dependsOn: [
+    dr_peering
+  ]
   location: dr_location
   tags: tags
   properties: {
@@ -326,14 +324,10 @@ resource associatedrnsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' =
 
 var aksIPTags = {
   'stack-name': 'aks-public-ip'
-  'stack-version': version
-  'stack-environment': toLower(replace(environment, '_', ''))
-  'stack-branch': branch
-  'stack-last-updated': lastUpdated
-  'stack-sub-name': subTagStackName
+  'stack-environment': toLower(replace(stackEnvironment, '_', ''))
 }
 
-resource aksStaticIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (environment == 'prod') {
+resource aksStaticIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (stackEnvironment == 'prod') {
   name: '${prefix}-aks-pip'
   tags: aksIPTags
   location: primary_location

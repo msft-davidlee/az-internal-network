@@ -8,9 +8,6 @@ on:
         description: 'Environment selector'     
         required: false
         default: 'default'
-env:
-  STACK_NAME_TAG: 'platform'
-  STACK_SUB_NAME_TAG: 'networking'
 
 jobs:
   setup:
@@ -22,21 +19,17 @@ jobs:
         run: |
           $envSelector = "${{ github.event.inputs.environmentselector }}"
           Write-Host "Environment Selector: $envSelector Branch ${{ github.ref }}"
-          if ($envSelector -eq '' -or $envSelector -eq 'default') {            
-            if ('${{ github.ref }}' -eq 'refs/heads/main') { 
+          if ($envSelector -eq '' -or $envSelector -eq 'default') {        
+            if ('${{ github.ref }}' -eq 'refs/heads/main') {
               echo "::set-output name=build_env::prod"
-              echo "::set-output name=skip_functional_test::true" 
             } else {
               echo "::set-output name=build_env::dev"
-              echo "::set-output name=skip_functional_test::false" 
             }
           } else {
-            echo "::set-output name=build_env::$envSelector"
-            echo "::set-output name=skip_functional_test::true" 
+            echo "::set-output name=build_env::$envSelector"            
           }
     outputs:
-      build_env: ${{ steps.setup.outputs.build_env }}
-      skip_functional_test: ${{ steps.setup.outputs.skip_functional_test }}
+      build_env: ${{ steps.setup.outputs.build_env }}      
 
   build_deploy:
     name: Build, Deploy VNet Job
@@ -49,7 +42,7 @@ jobs:
       - name: Azure CLI Login
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.MS_AZURE_CREDENTIALS }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
           enable-AzPSSession: true
 
       - id: resolve-shared-resources
@@ -62,13 +55,10 @@ jobs:
         id: deploy
         uses: azure/arm-deploy@v1
         with:
-          deploymentName: 'deploy-${{ needs.setup.outputs.build_env }}-${{ github.run_number }}'
+          deploymentName: '${{ needs.setup.outputs.build_env }}-${{ github.run_number }}'
           resourceGroupName: ${{ steps.resolve-shared-resources.outputs.resourceGroup }}
           template: ./deployment/deploy.bicep
-          parameters: >
-            branch=${{ github.ref }}
-            environment=${{ needs.setup.outputs.build_env }}
-            sourceIp=${{ secrets.SOURCE_IP }}
-            version=${{ github.run_number }}
-            prefix=${{ env.STACK_NAME_TAG }}
-            subTagStackName=${{ env.STACK_SUB_NAME_TAG }}
+          parameters: >            
+            stackEnvironment=${{ needs.setup.outputs.build_env }}
+            sourceIp=${{ steps.resolve-shared-resources.outputs.sourceIp }}            
+            prefix=${{ steps.resolve-shared-resources.outputs.prefix }}
