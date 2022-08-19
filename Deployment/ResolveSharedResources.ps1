@@ -8,8 +8,8 @@ $networkingResourceGroup = ($groups | Where-Object {
         $_.tags.'mgmt-id' -eq 'contoso' -and $_.tags.'stack-environment' -eq $BUILD_ENV -and $_.tags.'stack-name' -eq 'networking' }).name
 Write-Host "::set-output name=resourceGroup::$networkingResourceGroup"
 
-$prefix = ($groups | Where-Object { 
-        $_.tags.'mgmt-id' -eq 'contoso' -and $_.tags.'stack-environment' -eq $BUILD_ENV -and $_.tags.'stack-name' -eq 'shared-services' }).tags.'mgmt-prefix'
+$groups = az group list --tag stack-environment=prod | ConvertFrom-Json
+$prefix = ($groups | Where-Object { $_.tags.'mgmt-id' -eq 'contoso' -and $_.tags.'stack-name' -eq 'shared-services' }).tags.'mgmt-prefix'
 Write-Host "::set-output name=prefix::$prefix"
 
 $platformRes = (az resource list --tag stack-name='shared-configuration' | ConvertFrom-Json)
