@@ -1,16 +1,10 @@
-param primary_location string = 'centralus'
-param dr_location string = 'eastus2'
-param stackEnvironment string
+param location string
+param deployPublicIp string
 param prefix string
 param sourceIp string
+param ipPrefix string
 
-var priNetworkPrefix = toLower('${prefix}-${primary_location}')
-var drNetworkPrefix = toLower('${prefix}-${dr_location}')
-
-var tags = {
-  'stack-name': prefix
-  'stack-environment': toLower(replace(stackEnvironment, '_', ''))
-}
+var networkPrefix = toLower('${prefix}-${location}')
 
 var subnets = [
   'default'
@@ -25,74 +19,26 @@ var subnets = [
   // Typically, we are using /24 to define subnet size. However, note that Azure Container Apps 
   // subnets are special because they require a larger subnet size so if we are adding a new subnet, 
   // it should be added on top of this comment as we are using the index of array as the subnet like 
-  // 10.0.0.0/24 would be for default, 10.0.1.0/24 would be for ase etc.
+  // ipPrefix.0.0.0/24 would be for default, ipPrefix.0.1.0/24 would be for ase etc.
   'containerappcontrol'
   'containerapp'
 ]
 
-resource primary_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
-  name: '${priNetworkPrefix}-pri-vnet'
-  tags: tags
-  location: primary_location
+resource vnet 'Microsoft.Network/virtualNetworks@2022-01-01' = {
+  name: '${networkPrefix}-vnet'
+  location: location
   properties: {
     addressSpace: {
       addressPrefixes: [
-        '10.0.0.0/16'
+        '${ipPrefix}.0.0.0/16'
       ]
     }
     subnets: [for (subnetName, i) in subnets: {
       name: subnetName
       properties: {
-        addressPrefix: (subnetName == 'containerappcontrol') ? '10.0.96.0/21' : (subnetName == 'containerapp') ? '10.0.104.0/21' : '10.0.${i}.0/24'
+        addressPrefix: (subnetName == 'containerappcontrol') ? '${ipPrefix}.0.96.0/21' : (subnetName == 'containerapp') ? '${ipPrefix}.0.104.0/21' : '${ipPrefix}.0.${i}.0/24'
       }
     }]
-  }
-}
-
-resource dr_vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
-  name: '${drNetworkPrefix}-dr-vnet'
-  tags: tags
-  location: dr_location
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        '172.0.0.0/16'
-      ]
-    }
-    subnets: [for (subnetName, i) in subnets: {
-      name: subnetName
-      properties: {
-        addressPrefix: (subnetName == 'containerappcontrol') ? '172.0.96.0/21' : (subnetName == 'containerapp') ? '172.0.104.0/21' : '172.0.${i}.0/24'
-      }
-    }]
-  }
-}
-
-resource primary_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-05-01' = {
-  name: '${priNetworkPrefix}-pri-to-dr-peer'
-  parent: primary_vnet
-  properties: {
-    allowVirtualNetworkAccess: true
-    allowForwardedTraffic: false
-    allowGatewayTransit: false
-    useRemoteGateways: false
-    remoteVirtualNetwork: {
-      id: dr_vnet.id
-    }
-  }
-}
-
-resource dr_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-05-01' = {
-  name: '${drNetworkPrefix}-dr-to-pri-peer'
-  parent: dr_vnet
-  properties: {
-    allowVirtualNetworkAccess: true
-    allowForwardedTraffic: false
-    allowGatewayTransit: false
-    useRemoteGateways: false
-    remoteVirtualNetwork: {
-      id: primary_vnet.id
-    }
   }
 }
 
@@ -172,10 +118,9 @@ var allowAppGatewayV2 = {
   }
 }
 
-resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for subnetName in subnets: {
-  name: '${priNetworkPrefix}-pri-${subnetName}-subnet-nsg'
-  location: primary_location
-  tags: tags
+resource nsgs 'Microsoft.Network/networkSecurityGroups@2022-01-01' = [for subnetName in subnets: {
+  name: '${networkPrefix}-${subnetName}-subnet-nsg'
+  location: location
   properties: {
     securityRules: (subnetName == 'aks' || startsWith(subnetName, 'containerapp')) ? [
       allowHttp
@@ -195,46 +140,43 @@ resource prinsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for sub
 // may be overwritten on this level.
 
 @batchSize(1)
-resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = [for (subnetName, i) in subnets: {
-  name: '${primary_vnet.name}/${subnetName}'
-  dependsOn: [
-    primary_peering
-  ]
+resource associatensg 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' = [for (subnetName, i) in subnets: {
+  name: '${vnet.name}/${subnetName}'
   properties: {
-    addressPrefix: primary_vnet.properties.subnets[i].properties.addressPrefix
+    addressPrefix: vnet.properties.subnets[i].properties.addressPrefix
     networkSecurityGroup: {
-      id: prinsgs[i].id
+      id: nsgs[i].id
     }
     serviceEndpoints: (startsWith(subnetName, 'appsvc') || subnetName == 'aks') ? [
       {
         service: 'Microsoft.Sql'
         locations: [
-          primary_location
+          location
         ]
       }
       {
         service: 'Microsoft.Storage'
         locations: [
-          primary_location
+          location
         ]
       }
       {
         service: 'Microsoft.ServiceBus'
         locations: [
-          primary_location
+          location
         ]
       }
       {
         service: 'Microsoft.KeyVault'
         locations: [
-          primary_location
+          location
         ]
       }
     ] : (subnetName == 'appgw') ? [
       {
         service: 'Microsoft.Web'
         locations: [
-          primary_location
+          location
         ]
       }
     ] : []
@@ -249,88 +191,9 @@ resource associateprinsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' 
   }
 }]
 
-resource drnsgs 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for subnetName in subnets: {
-  name: '${drNetworkPrefix}-dr-${subnetName}-subnet-nsg'
-  dependsOn: [
-    dr_peering
-  ]
-  location: dr_location
-  tags: tags
-  properties: {
-    securityRules: (subnetName == 'aks' || startsWith(subnetName, 'containerapp')) ? [
-      allowHttp
-      allowHttps
-      allowFrontdoorOnHttp
-      allowFrontdoorOnHttps
-    ] : (subnetName == 'appgw') ? [
-      allowHttp
-      allowHttps
-      allowAppGatewayV2
-    ] : []
-  }
-}]
-
-@batchSize(1)
-resource associatedrnsg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = [for (subnetName, i) in subnets: {
-  name: '${dr_vnet.name}/${subnetName}'
-  properties: {
-    addressPrefix: dr_vnet.properties.subnets[i].properties.addressPrefix
-    networkSecurityGroup: {
-      id: drnsgs[i].id
-    }
-    serviceEndpoints: (startsWith(subnetName, 'appsvc') || subnetName == 'aks') ? [
-      {
-        service: 'Microsoft.Sql'
-        locations: [
-          dr_location
-        ]
-      }
-      {
-        service: 'Microsoft.Storage'
-        locations: [
-          dr_location
-        ]
-      }
-      {
-        service: 'Microsoft.ServiceBus'
-        locations: [
-          dr_location
-        ]
-      }
-      {
-        service: 'Microsoft.KeyVault'
-        locations: [
-          dr_location
-        ]
-      }
-    ] : (subnetName == 'appgw') ? [
-      {
-        service: 'Microsoft.Web'
-        locations: [
-          dr_location
-        ]
-      }
-    ] : []
-    delegations: (subnetName == 'ase') ? [
-      {
-        name: 'webapp'
-        properties: {
-          serviceName: 'Microsoft.Web/hostingEnvironments'
-        }
-      }
-    ] : []
-  }
-}]
-
-var aksIPTags = {
-  'stack-name': 'aks-public-ip'
-  'stack-environment': toLower(replace(stackEnvironment, '_', ''))
-}
-
-resource aksStaticIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (stackEnvironment == 'prod') {
-  name: '${prefix}-aks-pip'
-  tags: aksIPTags
-  location: primary_location
+resource aksStaticIP 'Microsoft.Network/publicIPAddresses@2022-01-01' = if (deployPublicIp == 'true') {
+  name: '${prefix}-pip'
+  location: location
   sku: {
     name: 'Standard'
     tier: 'Regional'
@@ -340,3 +203,5 @@ resource aksStaticIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (stac
     publicIPAddressVersion: 'IPv4'
   }
 }
+
+output vnetName string = vnet.name

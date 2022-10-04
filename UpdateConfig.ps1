@@ -1,9 +1,8 @@
 # Use this script to configure app configuration related to network deployment
-
 $ErrorActionPreference = "Stop"
 
 $ip = (Invoke-RestMethod "https://api.ipify.org?format=json").Ip
-$platformRes = (az resource list --tag stack-name='shared-configuration' | ConvertFrom-Json)
+$platformRes = (az resource list --tag ard-resource-id='shared-app-configuration' | ConvertFrom-Json)
 if ($LastExitCode -ne 0) {
     throw "An error has occured. Unable to locate shared configuration."
 }
