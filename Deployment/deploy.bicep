@@ -158,7 +158,7 @@ resource nsgs 'Microsoft.Network/networkSecurityGroups@2022-01-01' = [for subnet
 // may be overwritten on this level.
 
 @batchSize(1)
-resource associatensg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = [for (subnetName, i) in subnets: {
+resource associatensg 'Microsoft.Network/virtualNetworks/subnets@2022-01-01' = [for (subnetName, i) in subnets: {
   name: '${vnet.name}/${subnetName}'
   properties: {
     addressPrefix: vnet.properties.subnets[i].properties.addressPrefix
@@ -209,7 +209,7 @@ resource associatensg 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = [
   }
 }]
 
-resource aksStaticIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = if (deployPublicIp == 'true') {
+resource aksStaticIP 'Microsoft.Network/publicIPAddresses@2022-01-01' = if (deployPublicIp == 'true') {
   name: '${prefix}-pip'
   location: location
   sku: {
