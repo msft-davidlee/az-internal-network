@@ -31,8 +31,8 @@ jobs:
     outputs:
       build_env: ${{ steps.setup.outputs.build_env }}      
 
-  build_deploy:
-    name: Build, Deploy VNet Job
+  resolve_resources:
+    name: Resolve resources
     needs: setup
     environment: ${{ needs.setup.outputs.build_env }}
     runs-on: windows-latest
@@ -50,15 +50,133 @@ jobs:
         working-directory: .\deployment
         run: |
           .\ResolveSharedResources.ps1 -BUILD_ENV ${{ needs.setup.outputs.build_env }}
+    outputs:
+      priResourceGroup: ${{ steps.resolve-shared-resources.outputs.priResourceGroup }}            
+      drResourceGroup: ${{ steps.resolve-shared-resources.outputs.drResourceGroup }}      
+      sourceIp: ${{ steps.resolve-shared-resources.outputs.sourceIp }}  
 
-      - name: Build azure environment
+  deploy_pri_vnet:
+    name: Deploy primary vnet
+    needs: 
+      - resolve_resources
+      - setup
+    environment: ${{ needs.setup.outputs.build_env }}
+    runs-on: windows-latest
+    steps:    
+      - uses: actions/checkout@v2
+  
+      - name: Azure CLI Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+
+      - name: Build primary vnet
         id: deploy
         uses: azure/arm-deploy@v1
         with:
-          deploymentName: '${{ needs.setup.outputs.build_env }}-${{ github.run_number }}'
-          resourceGroupName: ${{ steps.resolve-shared-resources.outputs.resourceGroup }}
+          deploymentName: '${{ needs.setup.outputs.build_env }}-pri-vnet-${{ github.run_number }}'
+          resourceGroupName: ${{ needs.resolve_resources.outputs.priResourceGroup }}
           template: ./deployment/deploy.bicep
           parameters: >            
-            stackEnvironment=${{ needs.setup.outputs.build_env }}
-            sourceIp=${{ steps.resolve-shared-resources.outputs.sourceIp }}            
-            prefix=${{ steps.resolve-shared-resources.outputs.prefix }}
+            ipPrefix=10
+            sourceIp=${{ steps.resolve-shared-resources.outputs.sourceIp }}          
+            prefix=pri
+            location=centralus
+            deployPublicIp=${{ steps.resolve-shared-resources.outputs.deployPublicIp }}
+    outputs:
+      vnetName: ${{ steps.deploy.outputs.vnetName }}
+
+  deploy_dr_vnet:
+    name: Deploy dr vnet
+    needs: 
+      - resolve_resources
+      - setup
+    environment: ${{ needs.setup.outputs.build_env }}
+    runs-on: windows-latest
+    steps:    
+      - uses: actions/checkout@v2
+  
+      - name: Azure CLI Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+
+      - name: Build dr vnet
+        id: deploy
+        uses: azure/arm-deploy@v1
+        with:
+          deploymentName: '${{ needs.setup.outputs.build_env }}-dr-vnet-${{ github.run_number }}'
+          resourceGroupName: ${{ needs.resolve_resources.outputs.drResourceGroup }}
+          template: ./deployment/deploy.bicep
+          parameters: >            
+            ipPrefix=172
+            sourceIp=${{ steps.resolve-shared-resources.outputs.sourceIp }}
+            prefix=dr
+            location=eastus2
+            deployPublicIp=false
+    outputs:
+      vnetName: ${{ steps.deploy.outputs.vnetName }}
+
+  peer_pri_dr_vnet:
+    name: Peer pri to dr vnet
+    needs: 
+      - resolve_resources
+      - setup
+      - deploy_pri_vnet
+      - deploy_dr_vnet
+    environment: ${{ needs.setup.outputs.build_env }}
+    runs-on: windows-latest
+    steps:    
+      - uses: actions/checkout@v2
+  
+      - name: Azure CLI Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+
+      - name: Peer pri to dr vnet
+        id: deploy
+        uses: azure/arm-deploy@v1
+        with:
+          deploymentName: '${{ needs.setup.outputs.build_env }}-pri-dr-vnet-peer-${{ github.run_number }}'
+          resourceGroupName: ${{ needs.resolve_resources.outputs.priResourceGroup }}
+          template: ./deployment/peering.bicep
+          parameters: >            
+            srcVnetName=${{ needs.deploy_pri_vnet.outputs.vnetName }}
+            destVnetName=${{ needs.deploy_dr_vnet.outputs.vnetName }}
+            destResourceGroupName=${{ needs.resolve_resources.outputs.drResourceGroup }}
+            srcToDestPeerName=pri-dr
+
+  peer_dr_pri_vnet:
+    name: Peer dr to pri vnet
+    needs: 
+      - resolve_resources
+      - setup
+      - deploy_pri_vnet
+      - deploy_dr_vnet
+    environment: ${{ needs.setup.outputs.build_env }}
+    runs-on: windows-latest
+    steps:    
+      - uses: actions/checkout@v2
+  
+      - name: Azure CLI Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+
+      - name: Peer dr to pri vnet
+        id: deploy
+        uses: azure/arm-deploy@v1
+        with:
+          deploymentName: '${{ needs.setup.outputs.build_env }}-dr-pri-vnet-peer-${{ github.run_number }}'
+          resourceGroupName: ${{ needs.resolve_resources.outputs.drResourceGroup }}
+          template: ./deployment/peering.bicep
+          parameters: >            
+            srcVnetName=${{ needs.deploy_dr_vnet.outputs.vnetName }}
+            destVnetName=${{ needs.deploy_pri_vnet.outputs.vnetName }}
+            destResourceGroupName=${{ needs.resolve_resources.outputs.priResourceGroup }}
+            srcToDestPeerName=dr-pri
