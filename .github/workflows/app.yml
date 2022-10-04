@@ -80,10 +80,10 @@ jobs:
           template: ./deployment/deploy.bicep
           parameters: >            
             ipPrefix=10
-            sourceIp=${{ steps.resolve-shared-resources.outputs.sourceIp }}          
+            sourceIp=${{ needs.resolve_resources.outputs.sourceIp }}          
             prefix=pri
             location=centralus
-            deployPublicIp=${{ steps.resolve-shared-resources.outputs.deployPublicIp }}
+            deployPublicIp=${{ needs.resolve_resources.outputs.deployPublicIp }}
     outputs:
       vnetName: ${{ steps.deploy.outputs.vnetName }}
 
@@ -112,7 +112,7 @@ jobs:
           template: ./deployment/deploy.bicep
           parameters: >            
             ipPrefix=172
-            sourceIp=${{ steps.resolve-shared-resources.outputs.sourceIp }}
+            sourceIp=${{ needs.resolve_resources.outputs.sourceIp }}
             prefix=dr
             location=eastus2
             deployPublicIp=false

@@ -20,6 +20,10 @@ if ($LastExitCode -ne 0) {
 }
 
 $sourceIp = az appconfig kv show -n  $platformRes.name --key "contoso-networking/source-ip" --auth-mode login --query "value" -o tsv
+if (!$sourceIp) {
+    throw "Source IP is required to be configured."
+}
+
 if ($LastExitCode -ne 0) {
     throw "An error has occured. Unable to get source ip."
 }
