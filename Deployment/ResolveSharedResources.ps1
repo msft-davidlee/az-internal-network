@@ -14,7 +14,7 @@ Write-Host "::set-output name=priResourceGroup::$networkingResourceGroup"
 $networkingResourceGroup = ($groups | Where-Object { $_.tags.'ard-solution-id' -eq 'networking-dr' }).name
 Write-Host "::set-output name=drResourceGroup::$networkingResourceGroup"
 
-$platformRes = (az resource list --tag ard-solution-id='shared-app-configuration' | ConvertFrom-Json)
+$platformRes = (az resource list --tag ard-resource-id=shared-app-configuration | ConvertFrom-Json)
 if ($LastExitCode -ne 0) {
     throw "An error has occured. Unable to locate shared configuration."
 }
