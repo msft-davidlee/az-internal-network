@@ -50,10 +50,10 @@ var allowHttp = {
     protocol: 'Tcp'
     direction: 'Inbound'
     access: 'Allow'
-    sourceAddressPrefix: sourceIp
+    sourceAddressPrefixes: sourceIp
     sourcePortRange: '*'
     destinationPortRange: '80'
-    destinationAddressPrefix: '*'
+    destinationAddressPrefixes: '*'
   }
 }
 
@@ -65,10 +65,10 @@ var allowHttps = {
     protocol: 'Tcp'
     direction: 'Inbound'
     access: 'Allow'
-    sourceAddressPrefix: sourceIp
+    sourceAddressPrefixes: sourceIp
     sourcePortRange: '*'
     destinationPortRange: '443'
-    destinationAddressPrefix: '*'
+    destinationAddressPrefixes: '*'
   }
 }
 
@@ -80,10 +80,10 @@ var allowFrontdoorOnHttp = {
     protocol: 'Tcp'
     direction: 'Inbound'
     access: 'Allow'
-    sourceAddressPrefix: 'AzureFrontDoor.Backend'
+    sourceAddressPrefixes: 'AzureFrontDoor.Backend'
     sourcePortRange: '*'
     destinationPortRange: '80'
-    destinationAddressPrefix: '*'
+    destinationAddressPrefixes: '*'
   }
 }
 
@@ -95,10 +95,10 @@ var allowFrontdoorOnHttps = {
     protocol: 'Tcp'
     direction: 'Inbound'
     access: 'Allow'
-    sourceAddressPrefix: 'AzureFrontDoor.Backend'
+    sourceAddressPrefixes: 'AzureFrontDoor.Backend'
     sourcePortRange: '*'
     destinationPortRange: '443'
-    destinationAddressPrefix: '*'
+    destinationAddressPrefixes: '*'
   }
 }
 
@@ -111,10 +111,10 @@ var allowAppGatewayV2 = {
     protocol: 'Tcp'
     direction: 'Inbound'
     access: 'Allow'
-    sourceAddressPrefix: 'GatewayManager'
+    sourceAddressPrefixes: 'GatewayManager'
     sourcePortRange: '*'
     destinationPortRange: '65200-65535'
-    destinationAddressPrefix: '*'
+    destinationAddressPrefixes: '*'
   }
 }
 
