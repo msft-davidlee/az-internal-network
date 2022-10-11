@@ -51,9 +51,10 @@ jobs:
         run: |
           .\ResolveSharedResources.ps1 -BUILD_ENV ${{ needs.setup.outputs.build_env }}
     outputs:
-      priResourceGroup: ${{ steps.resolve-shared-resources.outputs.priResourceGroup }}            
-      drResourceGroup: ${{ steps.resolve-shared-resources.outputs.drResourceGroup }}      
-      sourceIp: ${{ steps.resolve-shared-resources.outputs.sourceIp }}  
+      priResourceGroup: ${{ steps.resolve-shared-resources.outputs.priResourceGroup }}
+      drResourceGroup: ${{ steps.resolve-shared-resources.outputs.drResourceGroup }} 
+      sourceIp: ${{ steps.resolve-shared-resources.outputs.sourceIp }}
+      deployPublicIp: ${{ steps.resolve-shared-resources.outputs.deployPublicIp }}
 
   deploy_pri_vnet:
     name: Deploy primary vnet
